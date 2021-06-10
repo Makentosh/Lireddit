@@ -3,10 +3,8 @@ import theme from '../theme'
 import React from 'react';
 
 
-// @ts-ignore
 function MyApp({Component, pageProps}) {
     return (
-
         <ChakraProvider resetCSS theme={theme}>
             <ColorModeProvider options={{
                 useSystemColorMode: true,
@@ -14,7 +12,6 @@ function MyApp({Component, pageProps}) {
                 <Component {...pageProps} />
             </ColorModeProvider>
         </ChakraProvider>
-
     )
 }
 

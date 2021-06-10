@@ -1,33 +1,31 @@
-import React, {useState} from 'react';
-import {withUrqlClient} from 'next-urql';
-import {createUrqlClient} from '../utils/createUrqlClient';
-import {useMeQuery, usePostsQuery} from '../generated/graphql';
+import React from 'react';
+import {PostsQuery, usePostsQuery} from '../generated/graphql';
 import {Box, Flex, Stack} from '@chakra-ui/layout';
-import {Button, Heading, Text, Link} from '@chakra-ui/react';
+import {Button, Heading, Link, Text} from '@chakra-ui/react';
 import Layout from '../components/Layout';
 import NextLink from 'next/link';
 import UpdootSection from '../components/UpdootSection';
 import EditDeletePostButtons from '../components/EditDeletePostButtons';
+import {withApollo} from '../utils/withApollo';
 
 
 const Index = ({}) => {
-    const [variables, setVariables] = useState({
-        limit: 15,
-        cursor: null as null | string
+    const {data, loading, fetchMore, variables} = usePostsQuery({
+        variables: {
+            limit: 15,
+            cursor: null
+        },
+        notifyOnNetworkStatusChange: true
     });
 
-    const [{data, fetching}] = usePostsQuery({
-        variables
-    });
-
-    if (!fetching && !data) {
+    if (!loading && !data) {
         return <div>you got query failed for some reason</div>
     }
 
     return (
         <Layout>
 
-            {!data?.posts?.posts && fetching ?
+            {!data?.posts?.posts && loading ?
                 <div>
                     Loading...
                 </div>
@@ -72,12 +70,32 @@ const Index = ({}) => {
                   my="4">
               <Button as={Link}
                       onClick={() => {
-                          setVariables({
-                              limit: variables.limit,
-                              cursor: data.posts.posts[data.posts.posts.length - 1].createdAt
+                          fetchMore<PostsQuery>({
+                              variables: {
+                                  limit: variables?.limit,
+                                  cursor: data.posts.posts[data.posts.posts.length - 1].createdAt
+                              },
+                              // updateQuery: (previousValue,
+                              //               {fetchMoreResult}): PostsQuery => {
+                              //     if(!fetchMoreResult) {
+                              //         return previousValue as PostsQuery
+                              //     }
+                              //
+                              //     return {
+                              //         __typename: "Query",
+                              //         posts: {
+                              //             __typename: 'PaginatedPosts',
+                              //             hasMore: (fetchMoreResult as PostsQuery).posts.hasMore,
+                              //             posts: [
+                              //             ...(previousValue as PostsQuery).posts.posts,
+                              //             ...(fetchMoreResult as PostsQuery).posts.posts
+                              //             ]
+                              //         }
+                              //     }
+                              // }
                           })
                       }}
-                      isLoading={fetching}>
+                      isLoading={loading}>
                 Load more
               </Button>
             </Flex>
@@ -90,4 +108,4 @@ const Index = ({}) => {
 }
 
 
-export default withUrqlClient(createUrqlClient, {ssr: true})(Index);
+export default withApollo({ssr: true})(Index);
